@@ -1,0 +1,85 @@
+#------------------------------
+#- INFORMAÇÕES SOBRE O SCRIPT -
+#------------------------------
+
+# Autor(a): Leonardo Fujisima Yada
+
+# Data de elaboração do script: 25.01.2023
+# Data da última atualização do scipt: - 
+
+#--------------------------
+#- CONFIGURAÇÕES INICIAIS -
+#--------------------------
+
+# Utilização de vírgula como separador de casas decimais
+
+options(OutDec = ",")
+
+# Diretório de trabalho
+
+getwd() # Verificação do diretório de trabalho atual
+
+# Bibliotecas utilizadas neste exercício
+
+library(data.table) # Importação e manipulação de dados
+library(ggplot2)    # Visualização de dados
+
+#------------------------------------
+#- IMPORTAÇÃO E TRATAMENTO DE DADOS -
+#------------------------------------
+
+# Leitura de arquivo
+
+dt_docentes_saeb_21 <- fread("TS_PROFESSOR.csv")
+
+# Conversão de variável em fator
+
+dt_docentes_saeb_21$TX_RESP_Q038_aj <- factor(
+  x=dt_docentes_saeb_21$TX_RESP_Q038,
+  levels=c("*", ".", "A", "B", "C", "D", "E"),
+  labels=c("Nulo", 
+           "Branco", 
+           "NÃO USO/Não tem", 
+           "USO e é \ninadequado", 
+           "USO e é \npouco adequado", 
+           "USO e é \nrazoavelmente \nadequado", 
+           "USO e é \nadequado")
+)
+
+#--------------------
+#- ANÁLISE DE DADOS - 
+#--------------------
+
+# Uso e adequação de software em sala de aula
+
+dt <- dt_docentes_saeb_21[
+  IN_PUBLICA==1 & TX_RESP_Q038_aj != "Nulo" & TX_RESP_Q038_aj != "Branco",
+  .(QTD=.N),
+  by="TX_RESP_Q038_aj"
+][
+  ,
+  .(TX_RESP_Q038_aj, QTD, P=round(100*(QTD/sum(QTD, na.rm=T)), 1))
+]
+
+#-------------------------
+#- VISUALIZAÇÃO DE DADOS -
+#-------------------------
+
+ggplot(
+  data=dt, mapping=aes(x=TX_RESP_Q038_aj, y=P)
+) +
+  geom_col(
+    position="dodge", fill="dark blue"
+  ) +
+  geom_text(
+    aes(label=round(P, 1)), position=position_dodge(0.9), vjust=-1, size=5
+  ) +
+  theme(
+    axis.title = element_blank(),
+    legend.title = element_blank(), 
+    panel.background = element_blank(), 
+    text = element_text(size=17)
+  ) +
+  ylim(0,50)
+
+
